@@ -21,8 +21,17 @@ if ($vlanversion == 'version1' || $vlanversion == '2') {
         $tmp_name   = 'jnxExVlanName';
     }
 
-    foreach ($vlans as $vlan_id => $vlan) {
-        $vlan_id = $tagoruntag[$vlan_id][$tmp_tag];
+    foreach ($untag as $key => $tagness) {
+    	$key = explode('.', $key);
+        if ($tagness['jnxExVlanPortTagness'] == 2) {
+            $tagness_by_vlan_index[$key[0]][$base_to_index[$key[1]]]['tag'] = 1;
+        } else {
+    	    $tagness_by_vlan_index[$key[0]][$base_to_index[$key[1]]]['tag'] = 0;
+        }
+    }
+
+    foreach ($vlans as $vlan_index => $vlan) {
+        $vlan_id = $tagoruntag[$vlan_index][$tmp_tag];
         d_echo(" $vlan_id");
         if (is_array($vlans_db[$vtpdomain_id][$vlan_id])) {
             $vlan_data = $vlans_db[$vtpdomain_id][$vlan_id];
@@ -44,13 +53,10 @@ if ($vlanversion == 'version1' || $vlanversion == '2') {
             ), 'vlans');
             echo '+';
         }
-
         $device['vlans'][$vtpdomain_id][$vlan_id] = $vlan_id;
-        $egress_ids = $tagoruntag[$vlan_id][$tmp_tag];
+        foreach ($tagness_by_vlan_index[$vlan_index] as $ifIndex => $tag) {
+	        $per_vlan_data[$vlan_id][$ifIndex]['untagged'] = $tag['tag'];
+	    }
 
-        foreach ($egress_ids as $port_id) {
-            $ifIndex = $base_to_index[$port_id];
-            $per_vlan_data[$vlan_id][$ifIndex]['untagged'] = $untagged_ids;
-        }
     }
 }
